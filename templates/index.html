@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Face Recognition</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f2f2f2;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            text-align: center;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            width: 70%;
+        }
+        h1 {
+            color: #4CAF50;
+            font-size: 36px;
+            margin-bottom: 20px;
+        }
+        .video-feed {
+            width: 100%;
+            border-radius: 10px;
+            border: 2px solid #ddd;
+            background-color: #000;
+        }
+        .status {
+            font-size: 18px;
+            color: #555;
+            margin-top: 20px;
+        }
+        .btn {
+            background-color: #4CAF50;
+            color: white;
+            font-size: 18px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        .btn:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>AI Face Recognition</h1>
+        <div>
+            <img src="{{ url_for('video_feed') }}" class="video-feed" />
+        </div>
+        <p class="status">Status: Detecting faces...</p>
+        <button class="btn" onclick="startRecognition()">Start Recognition</button>
+    </div>
+
+    <script>
+        function startRecognition() {
+            document.querySelector('.status').textContent = 'Status: Face recognition started...';
+        }
+    </script>
+</body>
+</html>
+
+
+
+
+
+<!-- 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Face Recognition</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav>
+        <ul>
+            <li><a href="#">Home</a></li>
+            <li><a href="#">About</a></li>
+            <li><a href="#">Contact</a></li>
+        </ul>
+    </nav>
+
+    <!-- Header Section -->
+    <div class="header">
+        <h1>Welcome to AI Face Recognition</h1>
+        <p>Click the button to start the face recognition process.</p>
+    </div>
+
+    <!-- Main content for the face recognition -->
+    <div class="content">
+        <div class="buttons">
+            <button id="startBtn">Start Detection</button>
+            <button id="exitBtn" style="display:none;">Exit</button>
+        </div>
+        <video id="videoElement" width="640" height="480" autoplay></video>
+    </div>
+
+    <!-- Footer Section -->
+    <footer>
+        <p>&copy; 2025 AI Face Recognition. All rights reserved.</p>
+    </footer>
+
+    <script>
+        let videoElement = document.getElementById('videoElement');
+        let startBtn = document.getElementById('startBtn');
+        let exitBtn = document.getElementById('exitBtn');
+
+        // Function to start face detection
+        startBtn.onclick = function() {
+            startBtn.style.display = 'none';
+            exitBtn.style.display = 'inline-block';
+            startFaceRecognition();
+        };
+
+        // Function to stop face detection
+        exitBtn.onclick = function() {
+            stopFaceRecognition();
+        };
+
+        // Function to start video streaming and face detection
+        function startFaceRecognition() {
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(function(stream) {
+                    videoElement.srcObject = stream;
+                    // Send request to Flask to start face detection
+                    fetch('/start_detection', { method: 'POST' })
+                        .then(response => response.json())
+                        .then(data => console.log(data));
+                })
+                .catch(function(err) {
+                    console.log("Error accessing camera: " + err);
+                });
+        }
+
+        // Function to stop the video stream and face detection
+        function stopFaceRecognition() {
+            let stream = videoElement.srcObject;
+            let tracks = stream.getTracks();
+
+            tracks.forEach(track => track.stop());
+            videoElement.srcObject = null;
+            exitBtn.style.display = 'none';
+            startBtn.style.display = 'inline-block';
+
+            // Send request to Flask to stop face detection
+            fetch('/stop_detection', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => console.log(data));
+        }
+    </script>
+</body>
+</html> -->
