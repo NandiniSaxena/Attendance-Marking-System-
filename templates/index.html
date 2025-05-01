@@ -1,83 +1,4 @@
 <!-- 
- 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Face Recognition</title>
-    <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            background-color: #f2f2f2;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-        .container {
-            text-align: center;
-            background-color: #fff;
-            border-radius: 10px;
-            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-            width: 70%;
-        }
-        h1 {
-            color: #4CAF50;
-            font-size: 36px;
-            margin-bottom: 20px;
-        }
-        .video-feed {
-            width: 100%;
-            border-radius: 10px;
-            border: 2px solid #ddd;
-            background-color: #000;
-        }
-        .status {
-            font-size: 18px;
-            color: #555;
-            margin-top: 20px;
-        }
-        .btn {
-            background-color: #4CAF50;
-            color: white;
-            font-size: 18px;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-top: 20px;
-        }
-        .btn:hover {
-            background-color: #45a049;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>AI Face Recognition</h1>
-        <div>
-            <img src="{{ url_for('video_feed') }}" class="video-feed" />
-        </div>
-        <p class="status">Status: Detecting faces...</p>
-        <button class="btn" onclick="startRecognition()">Start Recognition</button>
-    </div>
-
-    <script>
-        function startRecognition() {
-            document.querySelector('.status').textContent = 'Status: Face recognition started...';
-        }
-    </script>
-</body>
-</html> 
-
- -->
-
-
-
-
 
 
  <!DOCTYPE html>
@@ -162,6 +83,104 @@
     <footer>
         Developed with 💻 using Flask and OpenCV
     </footer>
+</body>
+</html>
+ --> 
+
+
+
+
+
+
+
+
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Face Attendance</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: #f0f4f8;
+      font-family: Arial, sans-serif;
+      color: #333;
+    }
+    header {
+      background: #3498db;
+      padding: 1rem;
+      color: white;
+      text-align: center;
+    }
+    .container {
+      max-width: 1000px;
+      margin: 2rem auto;
+      padding: 1rem;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    }
+    .video-feed {
+      width: 100%;
+      border-radius: 10px;
+      margin-bottom: 1rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+    th, td {
+      padding: 0.75rem;
+      border: 1px solid #ccc;
+      text-align: center;
+    }
+    th {
+      background-color: #3498db;
+      color: white;
+    }
+    h2 {
+      margin-top: 2rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Smart Face Attendance System</h1>
+  </header>
+  <div class="container">
+    <img src="{{ url_for('video_feed') }}" class="video-feed" alt="Live Feed" />
+
+    <h2>Today's Attendance</h2>
+    <table id="attendance-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Time Marked</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <script>
+    async function loadAttendance() {
+      const response = await fetch("/attendance_today");
+      const data = await response.json();
+      const tbody = document.querySelector("#attendance-table tbody");
+      tbody.innerHTML = "";
+      data.forEach(row => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${row.name}</td><td>${row.time}</td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    setInterval(loadAttendance, 3000); // Refresh every 3 seconds
+    loadAttendance();
+  </script>
 </body>
 </html>
 
