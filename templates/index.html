@@ -1,4 +1,4 @@
-
+<!-- 
  
 <!DOCTYPE html>
 <html lang="en">
@@ -73,4 +73,95 @@
 </body>
 </html> 
 
+ -->
+
+
+
+
+
+
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Smart Face Attendance</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1abc9c, #3498db);
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            align-items: center;
+            justify-content: center;
+        }
+
+        header {
+            text-align: center;
+            padding: 30px 20px;
+        }
+
+        header h1 {
+            font-size: 3rem;
+            margin: 0;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .video-box {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+            overflow: hidden;
+            padding: 20px;
+            max-width: 900px;
+            width: 95%;
+            margin-bottom: 40px;
+        }
+
+        .video-box img {
+            width: 100%;
+            border-radius: 12px;
+            border: 4px solid #fff;
+        }
+
+        footer {
+            text-align: center;
+            padding: 10px 0;
+            color: #eee;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 600px) {
+            header h1 {
+                font-size: 2rem;
+            }
+
+            .video-box {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🎥 Smart Face Recognition Attendance</h1>
+    </header>
+
+    <div class="video-box">
+        <img src="{{ url_for('video_feed') }}" alt="Live Video Feed">
+    </div>
+
+    <footer>
+        Developed with 💻 using Flask and OpenCV
+    </footer>
+</body>
+</html>
 
