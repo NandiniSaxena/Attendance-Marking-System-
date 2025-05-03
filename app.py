@@ -1,206 +1,171 @@
-import os
-import cv2
+from flask import Flask, render_template, request, redirect, url_for, session, send_file, Response
+from werkzeug.security import generate_password_hash, check_password_hash
 import csv
-import datetime
+import os
+import pandas as pd
+from collections import defaultdict
+from datetime import datetime
 import face_recognition
-from flask import Flask, render_template, Response, jsonify
+import cv2
 
 app = Flask(__name__)
+app.secret_key = 'supersecretkey'
 
-# Folder with known faces
-known_faces_dir = "known"
-known_face_encodings = []
-known_face_names = []
+# Admin credentials
+ADMIN_USERNAME = 'admin'
+ADMIN_PASSWORD_HASH = generate_password_hash('admin123')  # change password as needed
 
-# Load known faces
-for filename in os.listdir(known_faces_dir):
-    if filename.endswith(".jpg") or filename.endswith(".png"):
-        image_path = os.path.join(known_faces_dir, filename)
-        image = face_recognition.load_image_file(image_path)
-        encodings = face_recognition.face_encodings(image)
-        if encodings:
-            known_face_encodings.append(encodings[0])
-            known_face_names.append(os.path.splitext(filename)[0])
+# Paths
+attendance_file = 'attendance.csv'
+known_faces_dir = 'known'
 
-if not known_face_encodings:
-    raise Exception("No known faces found.")
+# Route: Admin Login Page
+@app.route('/admin', methods=['GET', 'POST'])
+def admin_login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        if username == ADMIN_USERNAME and check_password_hash(ADMIN_PASSWORD_HASH, password):
+            session['admin'] = True
+            return redirect(url_for('admin_dashboard'))
+        else:
+            return render_template('admin_login.html', error="Invalid credentials.")
+    return render_template('admin_login.html')
 
-# Initialize attendance
-attendance_file = "attendance.csv"
-today = datetime.date.today().strftime("%Y-%m-%d")
-marked_today = set()
+# Route: Admin Dashboard
+@app.route('/admin/dashboard', methods=['GET', 'POST'])
+def admin_dashboard():
+    if not session.get('admin'):
+        return redirect(url_for('admin_login'))
 
-if not os.path.exists(attendance_file):
-    with open(attendance_file, 'w', newline='') as f:
-        writer = csv.writer(f)
-        writer.writerow(["Date", "Name", "Time"])
+    # Process attendance data
+    group_by = request.args.get('group_by', 'day')
+    chart_type = request.args.get('chart_type', 'bar')
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
 
-# Load already marked names for today
-with open(attendance_file, 'r') as f:
-    reader = csv.reader(f)
-    for row in reader:
-        if row and row[0] == today:
-            marked_today.add(row[1])
+    chart_data = []
+    records = []
+    
+    if os.path.exists(attendance_file):
+        with open(attendance_file, 'r') as f:
+            reader = csv.DictReader(f)
+            raw_data = [row for row in reader]
+            grouped = defaultdict(lambda: defaultdict(int))
+            total_per_student = defaultdict(int)
 
-video_capture = cv2.VideoCapture(0)
+            for row in raw_data:
+                date, name, time = row.get('date'), row.get('name'), row.get('time')
+                if date and name and time:
+                    if start_date and date < start_date:
+                        continue
+                    if end_date and date > end_date:
+                        continue
+                    
+                    date_obj = datetime.strptime(date, '%Y-%m-%d')
+                    if group_by == 'week':
+                        key = f"Week {date_obj.isocalendar()[1]}"
+                    elif group_by == 'month':
+                        key = date_obj.strftime('%B')
+                    else:
+                        key = date
+                    
+                    grouped[name][key] += 1
+                    total_per_student[name] += 1
 
-def generate_frames():
+            for name, group in grouped.items():
+                labels = list(group.keys())
+                counts = [group[label] for label in labels]
+                chart_data.append({"name": name, "labels": labels, "counts": counts, "total": total_per_student[name]})
+                
+            records = raw_data  # For displaying attendance records
+            
+    return render_template('admin_dashboard.html',
+                           group_by=group_by,
+                           chart_type=chart_type,
+                           chart_data=chart_data,
+                           start_date=start_date,
+                           end_date=end_date,
+                           records=records)
+
+# Route: Attendance Capture Video Feed
+def gen():
+    video_capture = cv2.VideoCapture(0)
+    known_face_encodings = []
+    known_face_names = []
+
+    # Load known faces
+    for filename in os.listdir(known_faces_dir):
+        if filename.endswith(".jpg") or filename.endswith(".jpeg"):
+            img = face_recognition.load_image_file(f"{known_faces_dir}/{filename}")
+            face_encoding = face_recognition.face_encodings(img)[0]
+            name = os.path.splitext(filename)[0]  # Extract name from filename
+            known_face_encodings.append(face_encoding)
+            known_face_names.append(name)
+
     while True:
-        success, frame = video_capture.read()
-        if not success:
-            break
+        ret, frame = video_capture.read()
+        if not ret:
+            continue
+        rgb_frame = frame[:, :, ::-1]  # Convert BGR to RGB
 
-        small_frame = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25)
-        rgb_small = cv2.cvtColor(small_frame, cv2.COLOR_BGR2RGB)
+        # Find all face locations and encodings in the current frame
+        face_locations = face_recognition.face_locations(rgb_frame)
+        face_encodings = face_recognition.face_encodings(rgb_frame, face_locations)
 
-        face_locations = face_recognition.face_locations(rgb_small)
-        face_encodings = face_recognition.face_encodings(rgb_small, face_locations)
-
-        for face_encoding, face_location in zip(face_encodings, face_locations):
+        # For each face in this frame, see if it's a match for known faces
+        for (top, right, bottom, left), face_encoding in zip(face_locations, face_encodings):
             matches = face_recognition.compare_faces(known_face_encodings, face_encoding)
             name = "Unknown"
+            if True in matches:
+                first_match_index = matches.index(True)
+                name = known_face_names[first_match_index]
 
-            face_distances = face_recognition.face_distance(known_face_encodings, face_encoding)
-            best_match = face_distances.argmin()
-            if matches[best_match]:
-                name = known_face_names[best_match]
+            # Draw a rectangle around the face and label it with the name
+            cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), 2)
+            cv2.putText(frame, name, (left + 6, bottom - 6), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255, 255, 255), 1)
 
-            if name != "Unknown" and name not in marked_today:
-                marked_today.add(name)
-                now = datetime.datetime.now().strftime("%H:%M:%S")
-                with open(attendance_file, 'a', newline='') as f:
+            # If the person is recognized, mark attendance
+            if name != "Unknown":
+                now = datetime.now()
+                date_str = now.strftime("%Y-%m-%d")
+                time_str = now.strftime("%H:%M:%S")
+                with open(attendance_file, 'a') as f:
                     writer = csv.writer(f)
-                    writer.writerow([today, name, now])
-                print(f"Marked {name} present at {now}")
+                    writer.writerow([date_str, name, time_str])
 
-            # Draw box
-            top, right, bottom, left = [v * 4 for v in face_location]
-            cv2.rectangle(frame, (left, top), (right, bottom), (0, 255, 0), 2)
-            cv2.putText(frame, name, (left, top - 10),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.75, (255, 255, 255), 2)
-
-        ret, buffer = cv2.imencode('.jpg', frame)
-        frame = buffer.tobytes()
+        # Encode the frame in JPEG format and send to browser
+        ret, jpeg = cv2.imencode('.jpg', frame)
+        if not ret:
+            continue
+        frame = jpeg.tobytes()
         yield (b'--frame\r\n'
                b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n\r\n')
 
-
-@app.route('/')
-def index():
-    return render_template('index.html', students=known_face_names)
-
-@app.route('/video_feed')
+# Route: Streaming Video Feed
+@app.route('/admin/video_feed')
 def video_feed():
-    return Response(generate_frames(),
-                    mimetype='multipart/x-mixed-replace; boundary=frame')
+    return Response(gen(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
-@app.route('/attendance_today')
-def attendance_today():
-    records = []
-    with open(attendance_file, 'r') as f:
-        reader = csv.reader(f)
-        for row in reader:
-            if row and row[0] == today:
-                records.append({"name": row[1], "time": row[2]})
-    return jsonify(records)
+# Route: Export Attendance
+@app.route('/admin/export')
+def export_attendance():
+    if not session.get('admin'):
+        return redirect(url_for('admin_login'))
 
-if __name__ == "__main__":
+    if os.path.exists(attendance_file):
+        df = pd.read_csv(attendance_file)
+        export_path = 'attendance_export.xlsx'
+        df.to_excel(export_path, index=False)
+        return send_file(export_path, as_attachment=True)
+
+    return "No attendance file found."
+
+# Logout route
+@app.route('/logout')
+def logout():
+    session.pop('admin', None)
+    return redirect(url_for('admin_login'))
+
+if __name__ == '__main__':
     app.run(debug=True)
-
-
-
-
-
-
-# # import os
-# # import cv2
-# # import face_recognition
-# # from flask import Flask, render_template, Response
-
-# # app = Flask(__name__)
-
-# # # 🔄 [CHANGE #1]: Load all known face images from a folder
-# # known_face_encodings = []
-# # known_face_names = []
-
-# # known_faces_dir = "D:/newaiml/Attendance-Marking-System-/known"
-
-# # for filename in os.listdir(known_faces_dir):
-# #     if filename.endswith(".jpg") or filename.endswith(".png"):
-# #         image_path = os.path.join(known_faces_dir, filename)
-# #         image = face_recognition.load_image_file(image_path)
-# #         encodings = face_recognition.face_encodings(image)
-# #         if encodings:
-# #             known_face_encodings.append(encodings[0])
-# #             # Use filename (without extension) as name
-# #             known_face_names.append(os.path.splitext(filename)[0])
-
-# # if not known_face_encodings:
-# #     print("No faces found in the known folder.")
-# #     exit()
-
-# # # 🎥 [UNCHANGED]: Initialize the camera
-# # video_capture = cv2.VideoCapture(0)
-
-# # # 🔁 [MODIFIED]: Support multiple face matches
-# # def generate_frames():
-# #     while True:
-# #         ret, frame = video_capture.read()
-# #         if not ret:
-# #             break
-
-# #         # Resize for performance
-# #         small_frame = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25)
-# #         rgb_small = cv2.cvtColor(small_frame, cv2.COLOR_BGR2RGB)
-
-# #         face_locations = face_recognition.face_locations(rgb_small)
-# #         face_encodings = face_recognition.face_encodings(rgb_small, face_locations)
-
-# #         face_names = []  # 🆕 Store names for current frame
-
-# #         for face_encoding in face_encodings:
-# #             # Compare with all known faces
-# #             matches = face_recognition.compare_faces(known_face_encodings, face_encoding)
-# #             name = "Unknown"
-
-# #             # Use the known face with the smallest distance (most confident match)
-# #             face_distances = face_recognition.face_distance(known_face_encodings, face_encoding)
-# #             if len(face_distances) > 0:
-# #                 best_match_index = face_distances.argmin()
-# #                 if matches[best_match_index]:
-# #                     name = known_face_names[best_match_index]
-
-# #             face_names.append(name)
-
-# #         # Draw rectangles and names
-# #         for (top, right, bottom, left), name in zip(face_locations, face_names):
-# #             top *= 4
-# #             right *= 4
-# #             bottom *= 4
-# #             left *= 4
-
-# #             cv2.rectangle(frame, (left, top), (right, bottom), (0, 255, 0), 2)
-# #             cv2.putText(frame, name, (left, top - 10),
-# #                         cv2.FONT_HERSHEY_SIMPLEX, 0.75, (255, 255, 255), 2)
-
-# #         # Convert to JPEG for streaming
-# #         ret, buffer = cv2.imencode('.jpg', frame)
-# #         frame = buffer.tobytes()
-
-# #         yield (b'--frame\r\n'
-# #                b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n\r\n')
-
-# # # 🧭 Flask routes
-# # @app.route('/')
-# # def index():
-# #     return render_template('index.html')
-
-# # @app.route('/video_feed')
-# # def video_feed():
-# #     return Response(generate_frames(),
-# #                     mimetype='multipart/x-mixed-replace; boundary=frame')
-
-# # # 🚀 Run the app
-# # if __name__ == '__main__':
-# #     app.run(debug=True)
-

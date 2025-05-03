@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Capture Attendance</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f0f8ff;
+        }
+        .container {
+            margin-top: 30px;
+        }
+        .camera-feed {
+            margin: 20px auto;
+            width: 50%;
+            display: block;
+            border: 2px solid #ddd;
+        }
+        .btn-primary {
+            background-color: #4CAF50;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Capture Attendance</h2>
+
+        <!-- Camera Feed Section -->
+        <div class="card">
+            <div class="card-body">
+                <h5>Live Camera Feed</h5>
+                <img id="camera-feed" class="camera-feed" src="" alt="Camera Feed">
+            </div>
+        </div>
+
+        <!-- Button to Capture Attendance -->
+        <a href="#" class="btn btn-primary btn-block">Capture and Mark Attendance</a>
+
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary btn-block">Back to Dashboard</a>
+    </div>
+
+    <script>
+        function updateCameraFeed() {
+            fetch('/camera_feed')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.frame) {
+                        document.getElementById('camera-feed').src = 'data:image/jpeg;base64,' + data.frame;
+                    }
+                });
+        }
+        
+        // Update camera feed every second
+        setInterval(updateCameraFeed, 1000);
+    </script>
+</body>
+</html>

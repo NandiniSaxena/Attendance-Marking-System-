@@ -1,62 +1,87 @@
-/* Basic styles for the page */
-body {
+/* Global Styles */
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+  
+  body {
     font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    background-color: #f4f4f9;
-}
-
-nav {
-    background-color: #333;
+    background-color: #f2f2f2;
+    padding: 20px;
+    color: #333;
+  }
+  
+  /* Typography */
+  
+  h1, h2 {
+    text-align: center;
+  }
+  
+  /* Login Container */
+  
+  .login-container {
+    max-width: 400px;
+    margin: auto;
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px #ccc;
+  }
+  
+  .login-container input, .login-container button {
+    width: 100%;
+    margin: 10px 0;
     padding: 10px;
-}
-
-nav ul {
-    list-style-type: none;
-    margin: 0;
-    padding: 0;
+    display: block;
+  }
+  
+  /* Error Messages */
+  
+  .error {
+    color: #f00;
     text-align: center;
-}
-
-nav ul li {
-    display: inline;
-    margin-right: 20px;
-}
-
-nav ul li a {
-    color: white;
-    text-decoration: none;
-    font-weight: bold;
-}
-
-.header {
+  }
+  
+  /* Camera Box */
+  
+  .camera-box {
     text-align: center;
-    margin: 50px 0;
-}
-
-.content {
-    text-align: center;
-}
-
-.buttons button {
-    padding: 10px 20px;
-    font-size: 18px;
-    cursor: pointer;
-    background-color: #007BFF;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    margin: 10px;
-}
-
-.buttons button:hover {
-    background-color: #0056b3;
-}
-
-footer {
-    text-align: center;
+    margin-top: 20px;
+  }
+  
+  /* Student Section */
+  
+  .student-section {
     margin-top: 30px;
+  }
+  
+  /* Student List */
+  
+  .student-list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  /* Student Card */
+  
+  .student-card {
+    width: 180px;
+    background-color: #fff;
+    margin: 10px;
     padding: 10px;
-    background-color: #333;
-    color: white;
-}
+    text-align: center;
+    border-radius: 6px;
+    box-shadow: 0 0 8px #ccc;
+  }
+  
+  .student-card img {
+    width: 100%;
+    height: auto;
+    border-radius: 5px;
+    object-fit: cover;
+  }
+  
+  /* Removed the unnecessary ::contentReference[oaicite:0]{index=0} line */
