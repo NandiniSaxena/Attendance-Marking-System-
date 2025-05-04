@@ -6,81 +6,119 @@
     <title>Admin Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/css/bootstrap.min.css">
+
     <style>
         body {
-            background-color: #f4f6f9;
+            background-color: #eef2f7;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
+
+        h2.dashboard-title {
+            margin: 30px 0;
+            color: #4e73df;
+            text-align: center;
+            font-weight: 600;
+        }
+
         .card {
-            margin-top: 20px;
-            border-radius: 10px;
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            margin-bottom: 30px;
         }
+
         .card-header {
-            background-color: #4e73df;
+            background: linear-gradient(to right, #4e73df, #6f42c1);
             color: white;
+            font-weight: bold;
+            border-radius: 15px 15px 0 0;
         }
-        h2 {
-            text-align: center;
-            margin-top: 20px;
-            color: #333;
-        }
-        .attendance-table {
-            width: 100%;
-            margin-top: 20px;
-        }
+
         .attendance-table th, .attendance-table td {
+            vertical-align: middle;
+        }
+
+        .attendance-table tbody tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        .btn-export {
+            margin: 20px auto;
+            padding: 10px 25px;
+            font-size: 16px;
+            border-radius: 50px;
+        }
+
+        .video-wrapper {
+            background-color: #000;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .footer-text {
+            font-size: 14px;
+            color: #888;
             text-align: center;
-            padding: 8px;
+            margin-top: 40px;
         }
     </style>
 </head>
 <body>
+
     <div class="container">
-        <h2>Admin Dashboard</h2>
-        
+        <h2 class="dashboard-title"><i class="fas fa-tachometer-alt"></i> Admin Dashboard</h2>
+
         <div class="row">
-            <!-- Camera Feed -->
+            <!-- Live Camera Feed -->
             <div class="col-md-6">
                 <div class="card">
-                    <div class="card-header">Live Camera Feed</div>
-                    <div class="card-body">
-                        <img src="{{ url_for('video_feed') }}" class="img-fluid" alt="Video Feed">
+                    <div class="card-header"><i class="fas fa-video"></i> Live Camera Feed</div>
+                    <div class="card-body video-wrapper">
+                        <img src="{{ url_for('video_feed') }}" class="img-fluid" alt="Live Camera">
                     </div>
                 </div>
             </div>
 
-            <!-- Attendance Records -->
+            <!-- Attendance Table -->
             <div class="col-md-6">
                 <div class="card">
-                    <div class="card-header">Attendance Records</div>
+                    <div class="card-header"><i class="fas fa-clipboard-list"></i> Attendance Records</div>
                     <div class="card-body">
-                        <table class="attendance-table table table-bordered">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Name</th>
-                                    <th>Time</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for record in records %}
+                        <div class="table-responsive">
+                            <table class="table table-striped table-bordered attendance-table">
+                                <thead class="thead-dark">
                                     <tr>
-                                        <td>{{ record.date }}</td>
-                                        <td>{{ record.name }}</td>
-                                        <td>{{ record.time }}</td>
+                                        <th>Date</th>
+                                        <th>Name</th>
+                                        <th>Time</th>
                                     </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    {% for record in records %}
+                                        <tr>
+                                            <td>{{ record.date }}</td>
+                                            <td>{{ record.name }}</td>
+                                            <td>{{ record.time }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Export Attendance -->
-        <div class="row">
-            <div class="col-md-12 text-center">
-                <a href="{{ url_for('export_attendance') }}" class="btn btn-primary">Export Attendance</a>
-            </div>
+        <!-- Export Button -->
+        <div class="text-center">
+            <a href="{{ url_for('export_attendance') }}" class="btn btn-primary btn-export">
+                <i class="fas fa-file-export"></i> Export Attendance
+            </a>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer-text">
+            &copy; 2025 Attendance System | Built with ❤️ using Flask & Bootstrap
         </div>
     </div>
 

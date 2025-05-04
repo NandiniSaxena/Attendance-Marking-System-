@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -15,6 +15,88 @@
       <p class="error">{{ error }}</p>
       {% endif %}
       <button type="submit">Login</button>
+    </form>
+  </div>
+</body>
+</html> -->
+
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Login</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .gradient-bg {
+      background: linear-gradient(135deg, #6B7280, #1F2937);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .login-card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 1rem;
+      padding: 2rem;
+      box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2);
+      width: 100%;
+      max-width: 400px;
+      transition: transform 0.3s ease;
+    }
+    .login-card:hover {
+      transform: translateY(-5px);
+    }
+    .input-field {
+      transition: all 0.3s ease;
+    }
+    .input-field:focus {
+      border-color: #4B5563;
+      box-shadow: 0 0 0 3px rgba(75, 85, 99, 0.2);
+    }
+    .btn-login {
+      background: linear-gradient(to right, #4B5563, #6B7280);
+      transition: all 0.3s ease;
+    }
+    .btn-login:hover {
+      background: linear-gradient(to right, #6B7280, #9CA3AF);
+      transform: scale(1.05);
+    }
+    .error-message {
+      animation: fadeIn 0.5s ease-in;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+  </style>
+</head>
+<body class="gradient-bg">
+  <div class="login-card">
+    <div class="flex justify-center mb-6">
+      <svg class="w-12 h-12 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c0 1.104-.896 2-2 2s-2-.896-2-2 2-4 2-4 2 2.896 2 4zm0 0c0 1.104-.896 2-2 2s-2-.896-2-2 2-4 2-4 2 2.896 2 4zm0 0v4m-8 4h16m-2-8H4"></path>
+      </svg>
+    </div>
+    <h2 class="text-2xl font-bold text-center text-gray-800 mb-6">Admin Login</h2>
+    <form method="post" class="space-y-4">
+      <div>
+        <input type="text" name="username" placeholder="Username" required
+               class="input-field w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-gray-500">
+      </div>
+      <div>
+        <input type="password" name="password" placeholder="Password" required
+               class="input-field w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-gray-500">
+      </div>
+      {% if error %}
+      <p class="error-message text-red-500 text-sm text-center">{{ error }}</p>
+      {% endif %}
+      <button type="submit" class="btn-login w-full py-2 rounded-lg text-white font-semibold">Login</button>
     </form>
   </div>
 </body>
