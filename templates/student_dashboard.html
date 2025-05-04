@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <h1>Student Dashboard</h1>
+    </header>
+
+    <nav>
+        <a href="{{ url_for('index') }}">Home</a>
+    </nav>
+
+    <div class="container camera-container">
+        <h2>Capture Attendance via Camera</h2>
+        <video id="video" autoplay></video>
+        <button id="capture-btn">Capture Attendance</button>
+        <h3 id="attendance-status"></h3>
+    </div>
+
+    <h2>Your Daily Attendance</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Time</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for record in attendance_data %}
+                <tr>
+                    <td>{{ record.date }}</td>
+                    <td>{{ record.time }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <script>
+        const video = document.getElementById('video');
+        const captureBtn = document.getElementById('capture-btn');
+        const statusElement = document.getElementById('attendance-status');
+        let stream;
+
+        // Access camera
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(function (mediaStream) {
+                stream = mediaStream;
+                video.srcObject = stream;
+            })
+            .catch(function (err) {
+                console.log("Error: " + err);
+            });
+
+        captureBtn.addEventListener('click', function () {
+            // Capture the frame and send it to the server
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            canvas.toBlob(function (blob) {
+                const formData = new FormData();
+                formData.append('image', blob, 'capture.jpg');
+
+                fetch('/capture_attendance', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.name) {
+                        statusElement.textContent = `Attendance marked for ${data.name}`;
+                    } else {
+                        statusElement.textContent = 'No face detected';
+                    }
+                })
+                .catch(error => console.log('Error:', error));
+            });
+        });
+    </script>
+</body>
+</html>

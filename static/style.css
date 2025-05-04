@@ -1,87 +1,243 @@
-/* Global Styles */
-
+/* Reset some default browser styles */
 * {
-    box-sizing: border-box;
     margin: 0;
     padding: 0;
-  }
-  
-  body {
-    font-family: Arial, sans-serif;
-    background-color: #f2f2f2;
-    padding: 20px;
+    box-sizing: border-box;
+}
+
+/* Body and page background */
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f8f9fa;
     color: #333;
-  }
-  
-  /* Typography */
-  
-  h1, h2 {
+}
+
+/* Container for central alignment */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Header Styles */
+header {
+    background-color: #343a40;
+    color: white;
+    padding: 20px 0;
     text-align: center;
-  }
-  
-  /* Login Container */
-  
-  .login-container {
+}
+
+header h1 {
+    font-size: 2.5em;
+}
+
+/* Navbar Style */
+nav {
+    background-color: #007bff;
+    color: white;
+    padding: 10px 0;
+    text-align: center;
+}
+
+nav a {
+    color: white;
+    margin: 0 15px;
+    text-decoration: none;
+    font-size: 1.1em;
+}
+
+nav a:hover {
+    color: #ffcc00;
+}
+
+/* Form and Button Styles */
+form {
     max-width: 400px;
-    margin: auto;
-    background-color: #fff;
-    padding: 30px;
+    margin: 50px auto;
+    background: #fff;
+    padding: 20px;
     border-radius: 8px;
-    box-shadow: 0 0 10px #ccc;
-  }
-  
-  .login-container input, .login-container button {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+input[type="text"],
+input[type="password"],
+input[type="file"],
+select {
     width: 100%;
+    padding: 10px;
     margin: 10px 0;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+}
+
+button {
+    background-color: #007bff;
+    color: white;
     padding: 10px;
-    display: block;
-  }
-  
-  /* Error Messages */
-  
-  .error {
-    color: #f00;
-    text-align: center;
-  }
-  
-  /* Camera Box */
-  
-  .camera-box {
-    text-align: center;
-    margin-top: 20px;
-  }
-  
-  /* Student Section */
-  
-  .student-section {
-    margin-top: 30px;
-  }
-  
-  /* Student List */
-  
-  .student-list {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-  
-  /* Student Card */
-  
-  .student-card {
-    width: 180px;
-    background-color: #fff;
-    margin: 10px;
-    padding: 10px;
-    text-align: center;
-    border-radius: 6px;
-    box-shadow: 0 0 8px #ccc;
-  }
-  
-  .student-card img {
     width: 100%;
-    height: auto;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+/* Dashboard */
+.dashboard {
+    padding: 30px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.dashboard h2 {
+    font-size: 2em;
+    margin-bottom: 20px;
+}
+
+/* Table Styles */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+th, td {
+    text-align: left;
+    padding: 12px;
+    border-bottom: 1px solid #ddd;
+}
+
+th {
+    background-color: #007bff;
+    color: white;
+}
+
+/* Live Camera Styles */
+#video {
+    width: 100%;
+    border-radius: 8px;
+}
+
+.camera-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    padding: 20px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+button#capture-btn {
+    margin-top: 20px;
+    padding: 10px 20px;
+    background-color: #28a745;
+    border: none;
+    color: white;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+button#capture-btn:hover {
+    background-color: #218838;
+}
+
+/* Image Hover Effects */
+img:hover {
+    transform: scale(1.05);
+    transition: transform 0.3s ease;
+}
+
+/* Main Index Styles */
+main {
+    background-color: #007bff;
+    color: white;
+    padding: 60px 0;
+    text-align: center;
+    border-radius: 8px;
+    margin-top: 40px;
+}
+
+main h2 {
+    font-size: 2.5em;
+    margin-bottom: 20px;
+}
+
+main p {
+    font-size: 1.2em;
+}
+
+main .btn-main {
+    background-color: #ffcc00;
+    color: #343a40;
+    padding: 12px 30px;
+    border: none;
+    font-size: 1.2em;
     border-radius: 5px;
-    object-fit: cover;
-  }
-  
-  /* Removed the unnecessary ::contentReference[oaicite:0]{index=0} line */
+    cursor: pointer;
+    margin-top: 20px;
+    transition: all 0.3s ease;
+}
+
+main .btn-main:hover {
+    background-color: #ff9800;
+}
+/* Additional styles for the Teacher's page */
+.add-student-container {
+    margin-top: 20px;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.add-student-container h2 {
+    font-size: 2em;
+    margin-bottom: 20px;
+}
+
+.add-student-container form {
+    margin-top: 20px;
+}
+
+/* Table Styles for Attendance */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+th, td {
+    text-align: left;
+    padding: 12px;
+    border-bottom: 1px solid #ddd;
+}
+
+th {
+    background-color: #007bff;
+    color: white;
+}
+
+td {
+    background-color: #f8f9fa;
+}
+
+/* Date Filter Styles */
+.date-filter {
+    margin: 20px 0;
+    display: flex;
+    justify-content: space-between;
+}
+
+.date-filter input {
+    padding: 10px;
+    width: 45%;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+}

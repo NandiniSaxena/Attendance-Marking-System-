@@ -1,171 +1,141 @@
-from flask import Flask, render_template, request, redirect, url_for, session, send_file, Response
-from werkzeug.security import generate_password_hash, check_password_hash
-import csv
 import os
-import pandas as pd
-from collections import defaultdict
-from datetime import datetime
-import face_recognition
 import cv2
+import numpy as np
+import face_recognition
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify
+from werkzeug.utils import secure_filename
+from datetime import datetime
 
 app = Flask(__name__)
-app.secret_key = 'supersecretkey'
+app.secret_key = 'your_secret_key'
+KNOWN_FACES_DIR = 'known'
+UPLOAD_FOLDER = 'uploads'
+ALLOWED_EXTENSIONS = {'jpg', 'png', 'jpeg'}
+ATTENDANCE_FILE = 'attendance.csv'  # Store attendance in a CSV file
 
-# Admin credentials
-ADMIN_USERNAME = 'admin'
-ADMIN_PASSWORD_HASH = generate_password_hash('admin123')  # change password as needed
+# Function to load known faces
+def load_known_faces():
+    known_encodings = []
+    known_names = []
+    for filename in os.listdir(KNOWN_FACES_DIR):
+        if filename.endswith((".jpg", ".png")):
+            image_path = os.path.join(KNOWN_FACES_DIR, filename)
+            image = face_recognition.load_image_file(image_path)
+            encodings = face_recognition.face_encodings(image)
+            if encodings:
+                known_encodings.append(encodings[0])
+                known_names.append(os.path.splitext(filename)[0])
+            else:
+                print(f"[WARNING] No face found in: {filename}")
+    return known_encodings, known_names
 
-# Paths
-attendance_file = 'attendance.csv'
-known_faces_dir = 'known'
+known_encodings, known_names = load_known_faces()
 
-# Route: Admin Login Page
-@app.route('/admin', methods=['GET', 'POST'])
-def admin_login():
+# Function to check if the uploaded image contains a face and return the name
+def recognize_face(image):
+    encodings = face_recognition.face_encodings(image)
+    if encodings:
+        for encoding in encodings:
+            matches = face_recognition.compare_faces(known_encodings, encoding)
+            if True in matches:
+                first_match_index = matches.index(True)
+                return known_names[first_match_index]
+    return None
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-        if username == ADMIN_USERNAME and check_password_hash(ADMIN_PASSWORD_HASH, password):
-            session['admin'] = True
-            return redirect(url_for('admin_dashboard'))
-        else:
-            return render_template('admin_login.html', error="Invalid credentials.")
-    return render_template('admin_login.html')
+        role = request.form['role']
+        session['user'] = {'username': username, 'role': role}
+        return redirect(url_for(f'{role}_dashboard'))
+    return render_template('login.html')
 
-# Route: Admin Dashboard
-@app.route('/admin/dashboard', methods=['GET', 'POST'])
+@app.route('/admin_dashboard')
 def admin_dashboard():
-    if not session.get('admin'):
-        return redirect(url_for('admin_login'))
+    return render_template('admin_dashboard.html')
 
-    # Process attendance data
-    group_by = request.args.get('group_by', 'day')
-    chart_type = request.args.get('chart_type', 'bar')
-    start_date = request.args.get('start_date')
-    end_date = request.args.get('end_date')
+@app.route('/student_dashboard')
+def student_dashboard():
+    # Load attendance data for the student
+    username = session['user']['username']
+    attendance_data = get_attendance_for_student(username)
+    return render_template('student_dashboard.html', attendance_data=attendance_data)
 
-    chart_data = []
-    records = []
-    
-    if os.path.exists(attendance_file):
-        with open(attendance_file, 'r') as f:
-            reader = csv.DictReader(f)
-            raw_data = [row for row in reader]
-            grouped = defaultdict(lambda: defaultdict(int))
-            total_per_student = defaultdict(int)
+@app.route('/teacher_dashboard')
+def teacher_dashboard():
+    return render_template('teacher_dashboard.html')
 
-            for row in raw_data:
-                date, name, time = row.get('date'), row.get('name'), row.get('time')
-                if date and name and time:
-                    if start_date and date < start_date:
-                        continue
-                    if end_date and date > end_date:
-                        continue
-                    
-                    date_obj = datetime.strptime(date, '%Y-%m-%d')
-                    if group_by == 'week':
-                        key = f"Week {date_obj.isocalendar()[1]}"
-                    elif group_by == 'month':
-                        key = date_obj.strftime('%B')
-                    else:
-                        key = date
-                    
-                    grouped[name][key] += 1
-                    total_per_student[name] += 1
+@app.route('/add_student', methods=['GET', 'POST'])
+def add_student():
+    if request.method == 'POST':
+        name = request.form['name']
+        file = request.files['image']
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            file_path = os.path.join(KNOWN_FACES_DIR, filename)
+            file.save(file_path)
+            # Add student to the list
+            known_encodings, known_names = load_known_faces()
+            return redirect(url_for('teacher_dashboard'))
+    return render_template('add_student.html')
 
-            for name, group in grouped.items():
-                labels = list(group.keys())
-                counts = [group[label] for label in labels]
-                chart_data.append({"name": name, "labels": labels, "counts": counts, "total": total_per_student[name]})
-                
-            records = raw_data  # For displaying attendance records
-            
-    return render_template('admin_dashboard.html',
-                           group_by=group_by,
-                           chart_type=chart_type,
-                           chart_data=chart_data,
-                           start_date=start_date,
-                           end_date=end_date,
-                           records=records)
+@app.route('/capture_attendance', methods=['POST'])
+def capture_attendance():
+    image_file = request.files['image']
+    if image_file and allowed_file(image_file.filename):
+        filename = secure_filename(image_file.filename)
+        image_path = os.path.join(UPLOAD_FOLDER, filename)
+        image_file.save(image_path)
 
-# Route: Attendance Capture Video Feed
-def gen():
-    video_capture = cv2.VideoCapture(0)
-    known_face_encodings = []
-    known_face_names = []
+        image = face_recognition.load_image_file(image_path)
+        name = recognize_face(image)
+        if name:
+            # Mark attendance for the student
+            mark_attendance(name)
+            return jsonify(name=name)
+    return jsonify(name=None)
 
-    # Load known faces
-    for filename in os.listdir(known_faces_dir):
-        if filename.endswith(".jpg") or filename.endswith(".jpeg"):
-            img = face_recognition.load_image_file(f"{known_faces_dir}/{filename}")
-            face_encoding = face_recognition.face_encodings(img)[0]
-            name = os.path.splitext(filename)[0]  # Extract name from filename
-            known_face_encodings.append(face_encoding)
-            known_face_names.append(name)
+# Helper function to check file extensions
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-    while True:
-        ret, frame = video_capture.read()
-        if not ret:
-            continue
-        rgb_frame = frame[:, :, ::-1]  # Convert BGR to RGB
+# Function to mark attendance
+def mark_attendance(name):
+    with open(ATTENDANCE_FILE, 'a') as file:
+        date = datetime.now().strftime('%Y-%m-%d')
+        time = datetime.now().strftime('%H:%M:%S')
+        file.write(f"{date},{name},{time}\n")
 
-        # Find all face locations and encodings in the current frame
-        face_locations = face_recognition.face_locations(rgb_frame)
-        face_encodings = face_recognition.face_encodings(rgb_frame, face_locations)
+# Function to get attendance for a specific student
+def get_attendance_for_student(student_name):
+    attendance = []
+    with open(ATTENDANCE_FILE, 'r') as file:
+        for line in file:
+            date, name, time = line.strip().split(',')
+            if name == student_name:
+                attendance.append({'date': date, 'time': time})
+    return attendance
 
-        # For each face in this frame, see if it's a match for known faces
-        for (top, right, bottom, left), face_encoding in zip(face_locations, face_encodings):
-            matches = face_recognition.compare_faces(known_face_encodings, face_encoding)
-            name = "Unknown"
-            if True in matches:
-                first_match_index = matches.index(True)
-                name = known_face_names[first_match_index]
+# Function to filter attendance by date range
+@app.route('/filter_attendance', methods=['POST'])
+def filter_attendance():
+    start_date = request.form['start_date']
+    end_date = request.form['end_date']
+    filtered_attendance = []
 
-            # Draw a rectangle around the face and label it with the name
-            cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), 2)
-            cv2.putText(frame, name, (left + 6, bottom - 6), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255, 255, 255), 1)
+    with open(ATTENDANCE_FILE, 'r') as file:
+        for line in file:
+            date, name, time = line.strip().split(',')
+            if start_date <= date <= end_date:
+                filtered_attendance.append({'date': date, 'name': name, 'time': time})
 
-            # If the person is recognized, mark attendance
-            if name != "Unknown":
-                now = datetime.now()
-                date_str = now.strftime("%Y-%m-%d")
-                time_str = now.strftime("%H:%M:%S")
-                with open(attendance_file, 'a') as f:
-                    writer = csv.writer(f)
-                    writer.writerow([date_str, name, time_str])
-
-        # Encode the frame in JPEG format and send to browser
-        ret, jpeg = cv2.imencode('.jpg', frame)
-        if not ret:
-            continue
-        frame = jpeg.tobytes()
-        yield (b'--frame\r\n'
-               b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n\r\n')
-
-# Route: Streaming Video Feed
-@app.route('/admin/video_feed')
-def video_feed():
-    return Response(gen(), mimetype='multipart/x-mixed-replace; boundary=frame')
-
-# Route: Export Attendance
-@app.route('/admin/export')
-def export_attendance():
-    if not session.get('admin'):
-        return redirect(url_for('admin_login'))
-
-    if os.path.exists(attendance_file):
-        df = pd.read_csv(attendance_file)
-        export_path = 'attendance_export.xlsx'
-        df.to_excel(export_path, index=False)
-        return send_file(export_path, as_attachment=True)
-
-    return "No attendance file found."
-
-# Logout route
-@app.route('/logout')
-def logout():
-    session.pop('admin', None)
-    return redirect(url_for('admin_login'))
+    return jsonify(filtered_attendance)
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Student</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <h1>Add New Student</h1>
+    </header>
+
+    <nav>
+        <a href="{{ url_for('teacher_dashboard') }}">Back to Dashboard</a>
+    </nav>
+
+    <div class="container add-student-container">
+        <h2>Fill the form to add a new student</h2>
+        <form action="/add_student" method="POST" enctype="multipart/form-data">
+            <label for="name">Student Name</label>
+            <input type="text" name="name" id="name" required>
+            <label for="image">Student Photo</label>
+            <input type="file" name="image" id="image" accept="image/*" required>
+            <button type="submit">Add Student</button>
+        </form>
+    </div>
+</body>
+</html>
